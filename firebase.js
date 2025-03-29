@@ -1,4 +1,4 @@
-// Firebase configuration with all required fields
+// Firebase configuration (complete version)
 const firebaseConfig = {
   apiKey: "AIzaSyDZbu3cGDDMpoJwhIO03SugABdZVpBt0YM",
   authDomain: "hf-dlx-bike-automation.firebaseapp.com",
@@ -13,45 +13,35 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// Set authentication persistence
-firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-// Export Firebase functions
-export function setupRealtimeUpdates(updateCallback) {
+// Debugging function
+function setupRealtimeUpdates(updateCallback) {
+  console.log("Setting up Firebase listener...");
+  
   database.ref('current_location').on('value', (snapshot) => {
     const location = snapshot.val();
+    console.log("Raw data from Firebase:", location); // Debug log
+    
     if (location) {
+      console.log("Updating map with:", location.latitude, location.longitude);
       updateCallback({
         lat: location.latitude,
         lng: location.longitude,
         timestamp: location.timestamp || Date.now()
       });
+    } else {
+      console.warn("Received null location data");
     }
   }, (error) => {
     console.error("Firebase read failed:", error);
   });
 }
 
-export function getLocationHistory(callback) {
-  database.ref('location_history')
-    .orderByChild('timestamp')
-    .limitToLast(50)
-    .once('value')
-    .then(snapshot => callback(snapshot.val()))
-    .catch(error => {
-      console.error("Error fetching history:", error);
-      callback(null);
-    });
-}
-
-// Error handling wrapper
-export function initFirebaseAuth() {
-  return new Promise((resolve) => {
-    firebase.auth().signInAnonymously()
-      .then(() => resolve(true))
-      .catch(error => {
-        console.error("Anonymous auth failed:", error);
-        resolve(false);
-      });
-  });
+// For history (optional)
+function getLocationHistory(callback) {
+  database.ref('location_history').orderByChild('timestamp').limitToLast(50).once('value')
+    .then(snapshot => {
+      console.log("History data:", snapshot.val());
+      callback(snapshot.val());
+    })
+    .catch(error => console.error("History error:", error));
 }
