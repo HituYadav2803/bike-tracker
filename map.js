@@ -1,3 +1,4 @@
+import { setupRealtimeUpdates } from './firebase.js';
 let map;
 let marker;
 
