@@ -1,31 +1,45 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ... other head elements ... -->
-  <link rel="icon" href="data:,"> <!-- Fix favicon error -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Bike Tracker</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #map {
+      height: 80vh;
+      width: 100%;
+    }
+    .header {
+      padding: 10px;
+      background: #f8f9fa;
+      text-align: center;
+    }
+    #lastUpdate {
+      font-size: 0.9em;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-  <!-- ... your existing body content ... -->
-  
   <div class="header">
     <h1>Live Bike Tracker</h1>
     <div id="lastUpdate">Last updated: --:--:--</div>
   </div>
   <div id="map"></div>
-  <div class="controls">
-    <button id="centerBtn">Center on Bike</button>
-    <button id="historyBtn">Show History</button>
-  </div>
 
+  <!-- Load Leaflet first -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <!-- Load Leaflet first -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <!-- Load as modules -->
-  <script type="module" src="firebase.js"></script>
-  <script type="module" src="map.js"></script>
+  <!-- App Code -->
+  <script src="app.js"></script>
 </body>
 </html>
