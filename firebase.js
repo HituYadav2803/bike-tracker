@@ -14,7 +14,7 @@ const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 // Debugging function
-function setupRealtimeUpdates(updateCallback) {
+export function setupRealtimeUpdates(updateCallback) {
   console.log("Setting up Firebase listener...");
   
   database.ref('current_location').on('value', (snapshot) => {
@@ -37,7 +37,7 @@ function setupRealtimeUpdates(updateCallback) {
 }
 
 // For history (optional)
-function getLocationHistory(callback) {
+export function getLocationHistory(callback) {
   database.ref('location_history').orderByChild('timestamp').limitToLast(50).once('value')
     .then(snapshot => {
       console.log("History data:", snapshot.val());
