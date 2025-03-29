@@ -39,25 +39,42 @@ function initMap() {
   setupFirebaseListener();
 }
 
+// Replace the setupFirebaseListener function with this:
+
 function setupFirebaseListener() {
-  const locationRef = database.ref('current_location');
+  // Correct path to match your Firebase structure
+  const locationRef = database.ref('devices/bike_tracker/location');
+  const timestampRef = database.ref('devices/bike_tracker/timestamp');
   
-  locationRef.on('value', (snapshot) => {
-    const location = snapshot.val();
-    console.log("New location data:", location);
-    
-    if (location) {
-      updateMap({
-        lat: location.latitude,
-        lng: location.longitude,
-        timestamp: location.timestamp || Date.now()
-      });
-    }
+  locationRef.on('value', (locationSnapshot) => {
+    timestampRef.once('value').then((timeSnapshot) => {
+      const location = locationSnapshot.val();
+      const timestamp = timeSnapshot.val();
+      
+      console.log("Raw location data:", location);
+      console.log("Raw timestamp data:", timestamp);
+
+      if (location && typeof location.latitude === 'number' && typeof location.longitude === 'number') {
+        updateMap({
+          lat: location.latitude,
+          lng: location.longitude,
+          timestamp: timestamp || Date.now()
+        });
+      } else {
+        console.warn("Invalid location data:", location);
+        // Default to India coordinates if data is bad
+        updateMap({
+          lat: 20.5937,
+          lng: 78.9629,
+          timestamp: Date.now()
+        });
+      }
+    });
   }, (error) => {
     console.error("Firebase error:", error);
+    document.getElementById('lastUpdate').textContent = "Connection error";
   });
 }
-
 function updateMap(position) {
   // Update marker position
   marker.setLatLng([position.lat, position.lng]);
