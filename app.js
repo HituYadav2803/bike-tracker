@@ -1,4 +1,4 @@
-// Firebase Configuration
+// Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDZbu3cGDDMpoJwhIO03SugABdZVpBt0YM",
   authDomain: "hf-dlx-bike-automation.firebaseapp.com",
@@ -13,81 +13,73 @@ const firebaseConfig = {
 const app = firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// Map Variables
+// Map variables
 let map;
 let marker;
-let lastValidPosition = { lat: 20.5937, lng: 78.9629 }; // Default India position
 
 function initMap() {
-  // Create map centered on default position
-  map = L.map('map').setView([lastValidPosition.lat, lastValidPosition.lng], 15);
-  
+  // Create map centered on default position (India)
+  map = L.map('map', {
+    preferCanvas: true // Better for frequent updates
+  }).setView([20.5937, 78.9629], 15);
+
   // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+    attribution: '© OpenStreetMap',
+    crossOrigin: true // Important for CORS
   }).addTo(map);
 
-  // Create initial marker
-  marker = L.marker([lastValidPosition.lat, lastValidPosition.lng], {
+  // Create marker
+  marker = L.marker([20.5937, 78.9629], {
     icon: L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
       iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      iconAnchor: [16, 16],
+      crossOrigin: true // Important for CORS
     })
-  }).addTo(map)
-    .bindPopup("Waiting for GPS data...")
-    .openPopup();
+  }).addTo(map);
 
-  // Start listening for Firebase updates
+  // Start Firebase listener
   setupFirebaseListener();
 }
 
 function setupFirebaseListener() {
-  const trackerRef = database.ref('devices/bike_tracker');
+  const locationRef = database.ref('devices/bike_tracker/location');
   
-  trackerRef.on('value', (snapshot) => {
-    const data = snapshot.val();
-    console.log("Full Firebase Data:", data);
+  locationRef.on('value', (snapshot) => {
+    const location = snapshot.val();
+    console.log('Firebase data:', location);
     
-    if (data && data.location) {
-      const lat = parseFloat(data.location.latitude);
-      const lng = parseFloat(data.location.longitude);
-      const timestamp = data.timestamp || Math.floor(Date.now()/1000);
-      
-      if (!isNaN(lat) && !isNaN(lng) {
-        lastValidPosition = { lat, lng };
-        updateMap(lastValidPosition, timestamp);
-      } else {
-        console.warn("Invalid coordinates received");
-        showWarning("Received invalid coordinates");
-      }
+    if (location && location.latitude && location.longitude) {
+      updateMap({
+        lat: location.latitude,
+        lng: location.longitude,
+        timestamp: Date.now()
+      });
     } else {
-      console.warn("Incomplete data structure");
-      showWarning("Waiting for complete GPS data");
+      console.warn('Invalid location data');
+      document.getElementById('lastUpdate').textContent = 'Waiting for valid data...';
     }
   }, (error) => {
-    console.error("Firebase error:", error);
-    showWarning("Connection error - using last known position");
+    console.error('Firebase error:', error);
+    document.getElementById('lastUpdate').textContent = 'Connection error';
   });
 }
 
-function updateMap(position, timestamp) {
-  // Update marker position
-  marker.setLatLng([position.lat, position.lng])
-    .setPopupContent(`Last update: ${new Date(timestamp * 1000).toLocaleTimeString()}`)
-    .openPopup();
+function updateMap(position) {
+  // Update marker
+  marker.setLatLng([position.lat, position.lng]);
   
-  // Smoothly pan to new position
+  // Update display
+  const timeString = new Date(position.timestamp).toLocaleTimeString();
+  document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
+  
+  // Smooth pan to new location
   map.panTo([position.lat, position.lng], {
     animate: true,
     duration: 1
   });
 }
 
-function showWarning(message) {
-  marker.setPopupContent(message).openPopup();
-  document.getElementById('lastUpdate').textContent = message;
-}
-
 // Initialize when page loads
-window.onload = initMap;
+window.addEventListener('load', initMap);
