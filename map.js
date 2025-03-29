@@ -1,18 +1,40 @@
-// map.js - Minimal test version
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize map centered on India
-  const map = L.map('map').setView([20.5937, 78.9629], 13);
+let map;
+let marker;
+
+function initMap() {
+  // Initialize map
+  map = L.map('map').setView([20.5937, 78.9629], 13);
   
-  // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    attribution: '© OpenStreetMap'
   }).addTo(map);
+
+  // Initialize marker (empty at first)
+  marker = L.marker([0, 0], {
+    icon: L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
+      iconSize: [32, 32]
+    })
+  }).addTo(map);
+
+  // Start Firebase updates
+  setupRealtimeUpdates(updateMap);
+}
+
+function updateMap(position) {
+  console.log("Updating map position to:", position); // Debug log
+  const newPos = [position.lat, position.lng];
   
-  // Add a test marker
-  L.marker([20.5937, 78.9629])
-    .addTo(map)
-    .bindPopup("Map is working!")
-    .openPopup();
+  // Update marker
+  marker.setLatLng(newPos);
   
-  console.log("Map initialized successfully!");
-});
+  // Update timestamp display
+  const timeString = new Date(position.timestamp * 1000).toLocaleTimeString();
+  document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
+  
+  // Optional: Center map
+  map.setView(newPos, 13);
+}
+
+// Initialize when page loads
+window.onload = initMap;
