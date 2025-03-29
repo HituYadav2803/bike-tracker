@@ -16,92 +16,77 @@ const database = firebase.database();
 // Map Variables
 let map;
 let marker;
+let lastValidPosition = { lat: 20.5937, lng: 78.9629 }; // Default India position
 
 function initMap() {
-  // Create map centered on India
-  map = L.map('map').setView([20.5937, 78.9629], 13);
+  // Create map centered on default position
+  map = L.map('map').setView([lastValidPosition.lat, lastValidPosition.lng], 15);
   
   // Add OpenStreetMap tiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}/.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // Create initial marker (hidden until we get data)
-  marker = L.marker([0, 0], {
+  // Create initial marker
+  marker = L.marker([lastValidPosition.lat, lastValidPosition.lng], {
     icon: L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
       iconSize: [32, 32],
       iconAnchor: [16, 16]
-    }),
-    opacity: 0  // Start hidden
-  }).addTo(map);
+    })
+  }).addTo(map)
+    .bindPopup("Waiting for GPS data...")
+    .openPopup();
 
   // Start listening for Firebase updates
   setupFirebaseListener();
 }
 
 function setupFirebaseListener() {
-  const locationRef = database.ref('devices/bike_tracker/location');
-  const timestampRef = database.ref('devices/bike_tracker/timestamp');
-
-  locationRef.on('value', (locationSnapshot) => {
-    timestampRef.once('value').then((timeSnapshot) => {
-      const location = locationSnapshot.val();
-      const timestamp = timeSnapshot.val();
-
-      console.log("Raw Firebase Data - Location:", location);
-      console.log("Raw Firebase Data - Timestamp:", timestamp);
-
-      if (location && 
-          typeof location.latitude === 'number' && 
-          typeof location.longitude === 'number' &&
-          !isNaN(location.latitude) && 
-          !isNaN(location.longitude)) {
-        
-        // Make marker visible
-        marker.setOpacity(1);
-        
-        updateMap({
-          lat: location.latitude,
-          lng: location.longitude,
-          timestamp: timestamp || Math.floor(Date.now()/1000)
-        });
-        
+  const trackerRef = database.ref('devices/bike_tracker');
+  
+  trackerRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log("Full Firebase Data:", data);
+    
+    if (data && data.location) {
+      const lat = parseFloat(data.location.latitude);
+      const lng = parseFloat(data.location.longitude);
+      const timestamp = data.timestamp || Math.floor(Date.now()/1000);
+      
+      if (!isNaN(lat) && !isNaN(lng) {
+        lastValidPosition = { lat, lng };
+        updateMap(lastValidPosition, timestamp);
       } else {
-        console.warn("Invalid location data received");
-        showDefaultLocation();
+        console.warn("Invalid coordinates received");
+        showWarning("Received invalid coordinates");
       }
-    }).catch((error) => {
-      console.error("Timestamp error:", error);
-      showDefaultLocation();
-    });
+    } else {
+      console.warn("Incomplete data structure");
+      showWarning("Waiting for complete GPS data");
+    }
   }, (error) => {
-    console.error("Location error:", error);
-    showDefaultLocation();
+    console.error("Firebase error:", error);
+    showWarning("Connection error - using last known position");
   });
 }
 
-function updateMap(position) {
+function updateMap(position, timestamp) {
   // Update marker position
-  const newPos = [position.lat, position.lng];
-  marker.setLatLng(newPos);
+  marker.setLatLng([position.lat, position.lng])
+    .setPopupContent(`Last update: ${new Date(timestamp * 1000).toLocaleTimeString()}`)
+    .openPopup();
   
-  // Update timestamp display
-  const date = new Date(position.timestamp * 1000);
-  const timeString = date.toLocaleTimeString();
-  document.getElementById('lastUpdate').textContent = `Last updated: ${timeString}`;
-  
-  // Center map on new position (optional)
-  map.setView(newPos, 15);
+  // Smoothly pan to new position
+  map.panTo([position.lat, position.lng], {
+    animate: true,
+    duration: 1
+  });
 }
 
-function showDefaultLocation() {
-  updateMap({
-    lat: 20.5937,  // India coordinates
-    lng: 78.9629,
-    timestamp: Math.floor(Date.now()/1000)
-  });
-  document.getElementById('lastUpdate').textContent = "Waiting for GPS data...";
+function showWarning(message) {
+  marker.setPopupContent(message).openPopup();
+  document.getElementById('lastUpdate').textContent = message;
 }
 
 // Initialize when page loads
