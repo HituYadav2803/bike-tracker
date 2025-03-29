@@ -1,17 +1,13 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bike Tracker</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css">
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="manifest.json">
+  <!-- ... other head elements ... -->
+  <link rel="icon" href="data:,"> <!-- Fix favicon error -->
 </head>
 <body>
+  <!-- ... your existing body content ... -->
+  
   <div class="header">
     <h1>Live Bike Tracker</h1>
     <div id="lastUpdate">Last updated: --:--:--</div>
@@ -25,9 +21,10 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <!-- Leaflet JS -->
+  <!-- Load Leaflet first -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Custom JS -->
+  
+  <!-- Load as modules -->
   <script type="module" src="firebase.js"></script>
   <script type="module" src="map.js"></script>
 </body>
