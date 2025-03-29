@@ -1,4 +1,6 @@
-// Firebase configuration (complete version)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js';
+import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyDZbu3cGDDMpoJwhIO03SugABdZVpBt0YM",
   authDomain: "hf-dlx-bike-automation.firebaseapp.com",
@@ -9,39 +11,31 @@ const firebaseConfig = {
   appId: "1:640094593084:web:9d300c58d31c3dadf8a339"
 };
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
 
-// Debugging function
+// Named export for setupRealtimeUpdates
 export function setupRealtimeUpdates(updateCallback) {
   console.log("Setting up Firebase listener...");
+  const locationRef = ref(database, 'current_location');
   
-  database.ref('current_location').on('value', (snapshot) => {
+  onValue(locationRef, (snapshot) => {
     const location = snapshot.val();
-    console.log("Raw data from Firebase:", location); // Debug log
-    
+    console.log("Received location:", location);
     if (location) {
-      console.log("Updating map with:", location.latitude, location.longitude);
       updateCallback({
         lat: location.latitude,
         lng: location.longitude,
         timestamp: location.timestamp || Date.now()
       });
-    } else {
-      console.warn("Received null location data");
     }
-  }, (error) => {
-    console.error("Firebase read failed:", error);
+  }, {
+    onlyOnce: false
   });
 }
 
-// For history (optional)
+// Named export for getLocationHistory (if needed)
 export function getLocationHistory(callback) {
-  database.ref('location_history').orderByChild('timestamp').limitToLast(50).once('value')
-    .then(snapshot => {
-      console.log("History data:", snapshot.val());
-      callback(snapshot.val());
-    })
-    .catch(error => console.error("History error:", error));
+  const historyRef = ref(database, 'location_history');
+  // ... (your history implementation)
 }
